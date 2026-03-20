@@ -60,7 +60,7 @@ const VoiceAssistant = () => {
   }, [speak]);
 
   const startListening = useCallback(() => {
-    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const SpeechRecognitionAPI = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SpeechRecognition) {
       handleUserInput("Tell me about the patient's health status");
       return;
