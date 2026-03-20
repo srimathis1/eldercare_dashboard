@@ -41,6 +41,23 @@ const Medications = () => {
   const activeMeds = medications.filter(m => m.status === "active").length;
   const lowStock = medications.filter(m => m.remaining <= 5).length;
 
+  const handleScannedMeds = (parsed: { name: string; dosage: string; timing: string; instructions: string }[]) => {
+    const newMeds: Medication[] = parsed.map(p => ({
+      id: Date.now() + Math.random(),
+      name: p.name,
+      dosage: p.dosage,
+      frequency: p.timing,
+      times: p.timing === "Twice daily" ? "08:00 AM, 08:00 PM" : p.timing === "Three times daily" ? "08:00 AM, 12:00 PM, 06:00 PM" : "08:00 AM",
+      nextDose: "8:00 AM",
+      doctor: "From Prescription",
+      instructions: p.instructions,
+      remaining: 30,
+      total: 30,
+      status: "active",
+    }));
+    setMedications(prev => [...newMeds, ...prev]);
+  };
+
   const openCreate = () => {
     setEditingId(null);
     setFormData(emptyForm);
