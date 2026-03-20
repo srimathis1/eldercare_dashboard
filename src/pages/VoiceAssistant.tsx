@@ -51,7 +51,7 @@ const VoiceAssistant = () => {
   const [continuousMode, setContinuousMode] = useState(true);
   const [transcript, setTranscript] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<any>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const shouldContinueRef = useRef(false);
   const stoppedManuallyRef = useRef(false);
