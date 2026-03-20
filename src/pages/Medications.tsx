@@ -6,6 +6,7 @@ import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import PrescriptionScanner from "@/components/PrescriptionScanner";
 
 interface Medication {
   id: number;
@@ -39,6 +40,23 @@ const Medications = () => {
 
   const activeMeds = medications.filter(m => m.status === "active").length;
   const lowStock = medications.filter(m => m.remaining <= 5).length;
+
+  const handleScannedMeds = (parsed: { name: string; dosage: string; timing: string; instructions: string }[]) => {
+    const newMeds: Medication[] = parsed.map(p => ({
+      id: Date.now() + Math.random(),
+      name: p.name,
+      dosage: p.dosage,
+      frequency: p.timing,
+      times: p.timing === "Twice daily" ? "08:00 AM, 08:00 PM" : p.timing === "Three times daily" ? "08:00 AM, 12:00 PM, 06:00 PM" : "08:00 AM",
+      nextDose: "8:00 AM",
+      doctor: "From Prescription",
+      instructions: p.instructions,
+      remaining: 30,
+      total: 30,
+      status: "active",
+    }));
+    setMedications(prev => [...newMeds, ...prev]);
+  };
 
   const openCreate = () => {
     setEditingId(null);
@@ -146,6 +164,8 @@ const Medications = () => {
           <AlertCircle className="w-10 h-10 text-warning opacity-60" />
         </div>
       </div>
+
+      <PrescriptionScanner onMedicationsDetected={handleScannedMeds} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {medications.map((med) => (
