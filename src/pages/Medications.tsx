@@ -169,7 +169,7 @@ const Medications = () => {
         </div>
       </div>
 
-      <PrescriptionScanner onMedicationsDetected={handleScannedMeds} />
+      {isDoctor && <PrescriptionScanner onMedicationsDetected={handleScannedMeds} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {medications.map((med) => (
