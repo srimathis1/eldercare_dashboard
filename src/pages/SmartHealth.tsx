@@ -28,6 +28,7 @@ interface VitalDataPoint { time: string; value: number; }
 const DEFAULTS = { heartRate: 72, systolic: 138, diastolic: 85, oxygenLevel: 97, temperature: 98.4 };
 
 const SmartHealth = () => {
+  const { isDoctor } = useAuth();
   const [heartRate, setHeartRate] = useState(DEFAULTS.heartRate);
   const [systolic, setSystolic] = useState(DEFAULTS.systolic);
   const [diastolic, setDiastolic] = useState(DEFAULTS.diastolic);
