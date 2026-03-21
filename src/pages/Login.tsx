@@ -1,27 +1,25 @@
 import { useState } from "react";
-import { useAuth, UserRole } from "@/contexts/AuthContext";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Heart, LogIn } from "lucide-react";
 
-const Login = () => {
+interface LoginProps {
+  onSwitchToSignup: () => void;
+}
+
+const Login = ({ onSwitchToSignup }: LoginProps) => {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<UserRole>("doctor");
   const [error, setError] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!email || !password) {
-      setError("Please fill in all fields");
-      return;
-    }
-    const success = login(email, password, role);
-    if (!success) {
-      setError("Invalid credentials for the selected role");
+    const result = login(email, password);
+    if (!result.success) {
+      setError(result.error || "Login failed");
     }
   };
 
@@ -46,38 +44,13 @@ const Login = () => {
           )}
 
           <div>
-            <label className="text-sm font-medium text-muted-foreground">Role</label>
-            <Select value={role} onValueChange={(v) => setRole(v as UserRole)}>
-              <SelectTrigger className="mt-1">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="doctor">Doctor</SelectItem>
-                <SelectItem value="caregiver">Caregiver</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
             <label className="text-sm font-medium text-muted-foreground">Email</label>
-            <Input
-              type="email"
-              className="mt-1"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
+            <Input type="email" className="mt-1" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} />
           </div>
 
           <div>
             <label className="text-sm font-medium text-muted-foreground">Password</label>
-            <Input
-              type="password"
-              className="mt-1"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <Input type="password" className="mt-1" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} />
           </div>
 
           <Button type="submit" className="w-full gap-2">
@@ -85,11 +58,12 @@ const Login = () => {
             Sign In
           </Button>
 
-          <div className="text-xs text-muted-foreground text-center space-y-1 pt-2 border-t border-border">
-            <p className="font-medium">Demo Credentials</p>
-            <p>Doctor: doctor@eldercare.com / doctor123</p>
-            <p>Caregiver: caregiver@eldercare.com / caregiver123</p>
-          </div>
+          <p className="text-sm text-center text-muted-foreground">
+            Don't have an account?{" "}
+            <button type="button" onClick={onSwitchToSignup} className="text-primary font-medium hover:underline">
+              Create Account
+            </button>
+          </p>
         </form>
       </div>
     </div>
