@@ -241,12 +241,16 @@ const Appointments = () => {
                     <Check className="w-4 h-4" />Mark as Completed
                   </Button>
                 )}
-                <Button variant="outline" className="gap-2" onClick={() => openEditForm(selectedApt)}>
-                  <Pencil className="w-4 h-4" />Edit
-                </Button>
-                <Button variant="outline" className="gap-2 text-destructive hover:text-destructive" onClick={() => { setSelectedApt(null); setDeleteConfirm(selectedApt); }}>
-                  <Trash2 className="w-4 h-4" />Delete
-                </Button>
+                {isDoctor && (
+                  <>
+                    <Button variant="outline" className="gap-2" onClick={() => openEditForm(selectedApt)}>
+                      <Pencil className="w-4 h-4" />Edit
+                    </Button>
+                    <Button variant="outline" className="gap-2 text-destructive hover:text-destructive" onClick={() => { setSelectedApt(null); setDeleteConfirm(selectedApt); }}>
+                      <Trash2 className="w-4 h-4" />Delete
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           )}
