@@ -14,10 +14,10 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/voice-assistant", label: "Voice Assistant", icon: Phone },
   { to: "/smart-health", label: "Smart Health", icon: Brain },
-  { to: "/appointments", label: "Appointments", icon: Calendar, badge: 3 },
-  { to: "/medications", label: "Medications", icon: Pill, badge: 2 },
+  { to: "/appointments", label: "Appointments", icon: Calendar },
+  { to: "/medications", label: "Medications", icon: Pill },
   { to: "/patient-profile", label: "Patient Profile", icon: User },
-  { to: "/notifications", label: "Notifications", icon: Bell, badge: 5 },
+  { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
