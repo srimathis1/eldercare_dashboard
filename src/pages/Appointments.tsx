@@ -151,10 +151,12 @@ const Appointments = () => {
           <h1 className="text-2xl font-bold">Appointments</h1>
           <p className="text-sm text-muted-foreground">Manage patient appointments and schedules</p>
         </div>
-        <Button className="gap-2" onClick={openCreateForm}>
-          <Plus className="w-4 h-4" />
-          New Appointment
-        </Button>
+        {isDoctor && (
+          <Button className="gap-2" onClick={openCreateForm}>
+            <Plus className="w-4 h-4" />
+            New Appointment
+          </Button>
+        )}
       </div>
 
       <div className="relative mb-6">
