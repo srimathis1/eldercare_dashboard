@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ResponsiveContainer, Tooltip, Area, AreaChart, XAxis, YAxis } from "recharts";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 function generateVitalPoint(base: number, variance: number) {
   return Math.round(base + (Math.random() - 0.5) * variance);
