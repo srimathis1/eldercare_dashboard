@@ -40,6 +40,7 @@ const initialApts: DashApt[] = [
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { isDoctor } = useAuth();
   const [medList, setMedList] = useState(initialMeds);
   const [aptList, setAptList] = useState(initialApts);
 
