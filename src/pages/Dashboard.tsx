@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
@@ -39,6 +40,7 @@ const initialApts: DashApt[] = [
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const { isDoctor } = useAuth();
   const [medList, setMedList] = useState(initialMeds);
   const [aptList, setAptList] = useState(initialApts);
 
@@ -150,9 +152,11 @@ const Dashboard = () => {
         <div className="eldercare-card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Today's Appointments</h2>
-            <Button variant="ghost" size="sm" className="gap-1" onClick={openAptCreate}>
-              <Plus className="w-3.5 h-3.5" />Add
-            </Button>
+            {isDoctor && (
+              <Button variant="ghost" size="sm" className="gap-1" onClick={openAptCreate}>
+                <Plus className="w-3.5 h-3.5" />Add
+              </Button>
+            )}
           </div>
           <div className="space-y-3">
             {aptList.map((apt) => (
@@ -165,14 +169,16 @@ const Dashboard = () => {
                     <p className="text-sm text-muted-foreground">{apt.type}</p>
                   </div>
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openAptEdit(apt)}>
-                    <Pencil className="w-3 h-3" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setAptDeleteConfirm(apt)}>
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
+                {isDoctor && (
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openAptEdit(apt)}>
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setAptDeleteConfirm(apt)}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
             {aptList.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No appointments today</p>}
@@ -183,9 +189,11 @@ const Dashboard = () => {
         <div className="eldercare-card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Medication Tracker</h2>
-            <Button variant="ghost" size="sm" className="gap-1" onClick={openMedCreate}>
-              <Plus className="w-3.5 h-3.5" />Add
-            </Button>
+            {isDoctor && (
+              <Button variant="ghost" size="sm" className="gap-1" onClick={openMedCreate}>
+                <Plus className="w-3.5 h-3.5" />Add
+              </Button>
+            )}
           </div>
           <div className="space-y-4">
             {medList.map((med) => (
@@ -203,14 +211,16 @@ const Dashboard = () => {
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="font-semibold mr-2">{med.dosage}</span>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openMedEdit(med)}>
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setMedDeleteConfirm(med)}>
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
+                    {isDoctor && (
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openMedEdit(med)}>
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setMedDeleteConfirm(med)}>
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground ml-11">{med.instructions}</p>

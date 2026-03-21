@@ -5,6 +5,7 @@ import { useState, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Appointment {
   id: number;
@@ -43,6 +44,7 @@ const initialAppointments: Appointment[] = [
 const emptyForm = { patient: "", type: "", date: "", time: "", location: "", doctor: "", notes: "" };
 
 const Appointments = () => {
+  const { isDoctor } = useAuth();
   const [appointments, setAppointments] = useState(initialAppointments);
   const [search, setSearch] = useState("");
   const [selectedApt, setSelectedApt] = useState<Appointment | null>(null);
@@ -149,10 +151,12 @@ const Appointments = () => {
           <h1 className="text-2xl font-bold">Appointments</h1>
           <p className="text-sm text-muted-foreground">Manage patient appointments and schedules</p>
         </div>
-        <Button className="gap-2" onClick={openCreateForm}>
-          <Plus className="w-4 h-4" />
-          New Appointment
-        </Button>
+        {isDoctor && (
+          <Button className="gap-2" onClick={openCreateForm}>
+            <Plus className="w-4 h-4" />
+            New Appointment
+          </Button>
+        )}
       </div>
 
       <div className="relative mb-6">
@@ -189,12 +193,16 @@ const Appointments = () => {
               <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={() => setMessageDialog(apt)}>
                 <MessageSquare className="w-3.5 h-3.5" />Message
               </Button>
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => openEditForm(apt)}>
-                <Pencil className="w-3.5 h-3.5" />
-              </Button>
-              <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(apt)}>
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
+              {isDoctor && (
+                <>
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => openEditForm(apt)}>
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(apt)}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         ))}
@@ -233,12 +241,16 @@ const Appointments = () => {
                     <Check className="w-4 h-4" />Mark as Completed
                   </Button>
                 )}
-                <Button variant="outline" className="gap-2" onClick={() => openEditForm(selectedApt)}>
-                  <Pencil className="w-4 h-4" />Edit
-                </Button>
-                <Button variant="outline" className="gap-2 text-destructive hover:text-destructive" onClick={() => { setSelectedApt(null); setDeleteConfirm(selectedApt); }}>
-                  <Trash2 className="w-4 h-4" />Delete
-                </Button>
+                {isDoctor && (
+                  <>
+                    <Button variant="outline" className="gap-2" onClick={() => openEditForm(selectedApt)}>
+                      <Pencil className="w-4 h-4" />Edit
+                    </Button>
+                    <Button variant="outline" className="gap-2 text-destructive hover:text-destructive" onClick={() => { setSelectedApt(null); setDeleteConfirm(selectedApt); }}>
+                      <Trash2 className="w-4 h-4" />Delete
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           )}

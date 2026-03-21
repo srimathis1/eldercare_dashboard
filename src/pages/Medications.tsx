@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import PrescriptionScanner from "@/components/PrescriptionScanner";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Medication {
   id: number;
@@ -31,6 +32,7 @@ const initialMedications: Medication[] = [
 const emptyForm = { name: "", dosage: "", frequency: "", times: "", nextDose: "", doctor: "", instructions: "", remaining: "", total: "" };
 
 const Medications = () => {
+  const { isDoctor } = useAuth();
   const [medications, setMedications] = useState(initialMedications);
   const [formDialog, setFormDialog] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -135,10 +137,12 @@ const Medications = () => {
           <h1 className="text-2xl font-bold">Medications</h1>
           <p className="text-sm text-muted-foreground">Track and manage patient medications</p>
         </div>
-        <Button className="gap-2" onClick={openCreate}>
-          <Plus className="w-4 h-4" />
-          Add Medication
-        </Button>
+        {isDoctor && (
+          <Button className="gap-2" onClick={openCreate}>
+            <Plus className="w-4 h-4" />
+            Add Medication
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -165,7 +169,7 @@ const Medications = () => {
         </div>
       </div>
 
-      <PrescriptionScanner onMedicationsDetected={handleScannedMeds} />
+      {isDoctor && <PrescriptionScanner onMedicationsDetected={handleScannedMeds} />}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {medications.map((med) => (
@@ -179,12 +183,16 @@ const Medications = () => {
                 <span className="inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium bg-primary text-primary-foreground">
                   {med.status}
                 </span>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(med)}>
-                  <Pencil className="w-3.5 h-3.5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(med)}>
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
+                {isDoctor && (
+                  <>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(med)}>
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(med)}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
             <p className="text-sm text-muted-foreground mb-3 ml-6">{med.dosage}</p>

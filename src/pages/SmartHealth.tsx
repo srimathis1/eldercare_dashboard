@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { ResponsiveContainer, Tooltip, Area, AreaChart, XAxis, YAxis } from "recharts";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 function generateVitalPoint(base: number, variance: number) {
   return Math.round(base + (Math.random() - 0.5) * variance);
@@ -27,6 +28,7 @@ interface VitalDataPoint { time: string; value: number; }
 const DEFAULTS = { heartRate: 72, systolic: 138, diastolic: 85, oxygenLevel: 97, temperature: 98.4 };
 
 const SmartHealth = () => {
+  const { isDoctor } = useAuth();
   const [heartRate, setHeartRate] = useState(DEFAULTS.heartRate);
   const [systolic, setSystolic] = useState(DEFAULTS.systolic);
   const [diastolic, setDiastolic] = useState(DEFAULTS.diastolic);
@@ -111,12 +113,16 @@ const SmartHealth = () => {
           <p className="text-sm text-muted-foreground">Real-time health metrics & AI-powered insights</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={openEditVitals}>
-            <Pencil className="w-4 h-4" />Edit Vitals
-          </Button>
-          <Button variant="outline" className="gap-2" onClick={handleResetVitals}>
-            <RotateCcw className="w-4 h-4" />Reset
-          </Button>
+          {isDoctor && (
+            <>
+              <Button variant="outline" className="gap-2" onClick={openEditVitals}>
+                <Pencil className="w-4 h-4" />Edit Vitals
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={handleResetVitals}>
+                <RotateCcw className="w-4 h-4" />Reset
+              </Button>
+            </>
+          )}
           <Button className="gap-2" variant={isMonitoring ? "destructive" : "default"} onClick={() => setIsMonitoring(p => !p)}>
             <Activity className="w-4 h-4" />
             {isMonitoring ? "Pause" : "Resume"}
