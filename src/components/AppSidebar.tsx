@@ -14,10 +14,10 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard },
   { to: "/voice-assistant", label: "Voice Assistant", icon: Phone },
   { to: "/smart-health", label: "Smart Health", icon: Brain },
-  { to: "/appointments", label: "Appointments", icon: Calendar, badge: 3 },
-  { to: "/medications", label: "Medications", icon: Pill, badge: 2 },
+  { to: "/appointments", label: "Appointments", icon: Calendar },
+  { to: "/medications", label: "Medications", icon: Pill },
   { to: "/patient-profile", label: "Patient Profile", icon: User },
-  { to: "/notifications", label: "Notifications", icon: Bell, badge: 5 },
+  { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -34,7 +34,7 @@ const AppSidebar = () => {
       </div>
 
       <nav className="flex flex-col gap-1">
-        {navItems.map(({ to, label, icon: Icon, badge }) => {
+        {navItems.map(({ to, label, icon: Icon }) => {
           const isActive = location.pathname === to;
           return (
             <NavLink
@@ -47,12 +47,7 @@ const AppSidebar = () => {
               }`}
             >
               <Icon className="w-[18px] h-[18px]" />
-              <span className="flex-1">{label}</span>
-              {badge && (
-                <span className="w-5 h-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-medium">
-                  {badge}
-                </span>
-              )}
+              <span>{label}</span>
             </NavLink>
           );
         })}
