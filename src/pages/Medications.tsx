@@ -183,12 +183,16 @@ const Medications = () => {
                 <span className="inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium bg-primary text-primary-foreground">
                   {med.status}
                 </span>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(med)}>
-                  <Pencil className="w-3.5 h-3.5" />
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(med)}>
-                  <Trash2 className="w-3.5 h-3.5" />
-                </Button>
+                {isDoctor && (
+                  <>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(med)}>
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(med)}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
             <p className="text-sm text-muted-foreground mb-3 ml-6">{med.dosage}</p>
