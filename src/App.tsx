@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { useState } from "react";
 import AppLayout from "./components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import VoiceAssistant from "./pages/VoiceAssistant";
@@ -14,14 +15,20 @@ import PatientProfile from "./pages/PatientProfile";
 import Notifications from "./pages/Notifications";
 import SettingsPage from "./pages/SettingsPage";
 import Login from "./pages/Login";
+import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const AuthenticatedApp = () => {
   const { user } = useAuth();
+  const [authPage, setAuthPage] = useState<"login" | "signup">("login");
 
-  if (!user) return <Login />;
+  if (!user) {
+    return authPage === "login"
+      ? <Login onSwitchToSignup={() => setAuthPage("signup")} />
+      : <Signup onSwitchToLogin={() => setAuthPage("login")} />;
+  }
 
   return (
     <BrowserRouter>

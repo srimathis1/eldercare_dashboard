@@ -13,8 +13,8 @@ const AppLayout = () => {
       <div className="flex-1 flex flex-col">
         <header className="h-14 border-b border-border bg-card flex items-center justify-between px-6">
           <span className="text-sm text-muted-foreground">
-            Logged in as <span className="font-semibold text-foreground capitalize">{user?.role}</span>
-            {user?.name && <span className="ml-1">— {user.name}</span>}
+            Welcome, <span className="font-semibold text-foreground">{user?.name}</span>
+            <span className="ml-1 capitalize">({user?.role})</span>
           </span>
           <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground" onClick={logout}>
             <LogOut className="w-4 h-4" />
