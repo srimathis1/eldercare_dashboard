@@ -137,10 +137,12 @@ const Medications = () => {
           <h1 className="text-2xl font-bold">Medications</h1>
           <p className="text-sm text-muted-foreground">Track and manage patient medications</p>
         </div>
-        <Button className="gap-2" onClick={openCreate}>
-          <Plus className="w-4 h-4" />
-          Add Medication
-        </Button>
+        {isDoctor && (
+          <Button className="gap-2" onClick={openCreate}>
+            <Plus className="w-4 h-4" />
+            Add Medication
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
