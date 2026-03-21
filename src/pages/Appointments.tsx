@@ -193,12 +193,16 @@ const Appointments = () => {
               <Button variant="outline" size="sm" className="flex-1 gap-1.5" onClick={() => setMessageDialog(apt)}>
                 <MessageSquare className="w-3.5 h-3.5" />Message
               </Button>
-              <Button variant="outline" size="sm" className="gap-1.5" onClick={() => openEditForm(apt)}>
-                <Pencil className="w-3.5 h-3.5" />
-              </Button>
-              <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(apt)}>
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
+              {isDoctor && (
+                <>
+                  <Button variant="outline" size="sm" className="gap-1.5" onClick={() => openEditForm(apt)}>
+                    <Pencil className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button variant="outline" size="sm" className="gap-1.5 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(apt)}>
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         ))}
