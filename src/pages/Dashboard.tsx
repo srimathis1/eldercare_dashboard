@@ -169,14 +169,16 @@ const Dashboard = () => {
                     <p className="text-sm text-muted-foreground">{apt.type}</p>
                   </div>
                 </div>
-                <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openAptEdit(apt)}>
-                    <Pencil className="w-3 h-3" />
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setAptDeleteConfirm(apt)}>
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
+                {isDoctor && (
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openAptEdit(apt)}>
+                      <Pencil className="w-3 h-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setAptDeleteConfirm(apt)}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                )}
               </div>
             ))}
             {aptList.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">No appointments today</p>}
