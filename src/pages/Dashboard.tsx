@@ -211,14 +211,16 @@ const Dashboard = () => {
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="font-semibold mr-2">{med.dosage}</span>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openMedEdit(med)}>
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setMedDeleteConfirm(med)}>
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
+                    {isDoctor && (
+                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openMedEdit(med)}>
+                          <Pencil className="w-3 h-3" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => setMedDeleteConfirm(med)}>
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground ml-11">{med.instructions}</p>
