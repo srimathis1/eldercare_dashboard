@@ -152,9 +152,11 @@ const Dashboard = () => {
         <div className="eldercare-card">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold">Today's Appointments</h2>
-            <Button variant="ghost" size="sm" className="gap-1" onClick={openAptCreate}>
-              <Plus className="w-3.5 h-3.5" />Add
-            </Button>
+            {isDoctor && (
+              <Button variant="ghost" size="sm" className="gap-1" onClick={openAptCreate}>
+                <Plus className="w-3.5 h-3.5" />Add
+              </Button>
+            )}
           </div>
           <div className="space-y-3">
             {aptList.map((apt) => (
