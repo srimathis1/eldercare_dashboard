@@ -113,12 +113,16 @@ const SmartHealth = () => {
           <p className="text-sm text-muted-foreground">Real-time health metrics & AI-powered insights</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2" onClick={openEditVitals}>
-            <Pencil className="w-4 h-4" />Edit Vitals
-          </Button>
-          <Button variant="outline" className="gap-2" onClick={handleResetVitals}>
-            <RotateCcw className="w-4 h-4" />Reset
-          </Button>
+          {isDoctor && (
+            <>
+              <Button variant="outline" className="gap-2" onClick={openEditVitals}>
+                <Pencil className="w-4 h-4" />Edit Vitals
+              </Button>
+              <Button variant="outline" className="gap-2" onClick={handleResetVitals}>
+                <RotateCcw className="w-4 h-4" />Reset
+              </Button>
+            </>
+          )}
           <Button className="gap-2" variant={isMonitoring ? "destructive" : "default"} onClick={() => setIsMonitoring(p => !p)}>
             <Activity className="w-4 h-4" />
             {isMonitoring ? "Pause" : "Resume"}
