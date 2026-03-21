@@ -44,6 +44,7 @@ const initialAppointments: Appointment[] = [
 const emptyForm = { patient: "", type: "", date: "", time: "", location: "", doctor: "", notes: "" };
 
 const Appointments = () => {
+  const { isDoctor } = useAuth();
   const [appointments, setAppointments] = useState(initialAppointments);
   const [search, setSearch] = useState("");
   const [selectedApt, setSelectedApt] = useState<Appointment | null>(null);
