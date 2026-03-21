@@ -32,6 +32,7 @@ const initialMedications: Medication[] = [
 const emptyForm = { name: "", dosage: "", frequency: "", times: "", nextDose: "", doctor: "", instructions: "", remaining: "", total: "" };
 
 const Medications = () => {
+  const { isDoctor } = useAuth();
   const [medications, setMedications] = useState(initialMedications);
   const [formDialog, setFormDialog] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
