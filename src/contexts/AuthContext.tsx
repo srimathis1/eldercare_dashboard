@@ -1,114 +1,120 @@
-import { createContext, useContext, useState, ReactNode, useCallback, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 
 export type UserRole = "doctor" | "caregiver";
 
-export interface User {
+export interface UserProfile {
+  id: string;
   name: string;
   email: string;
   role: UserRole;
 }
 
-interface StoredUser extends User {
-  password: string;
-}
-
 interface AuthContextType {
-  user: User | null;
-  login: (email: string, password: string) => { success: boolean; error?: string };
-  signup: (name: string, email: string, password: string, role: UserRole) => { success: boolean; error?: string };
-  logout: () => void;
+  user: UserProfile | null;
+  session: Session | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  signup: (name: string, email: string, password: string, role: UserRole) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
   isDoctor: boolean;
-}
-
-const USERS_KEY = "eldercare_users";
-const SESSION_KEY = "eldercare_session";
-
-function getStoredUsers(): StoredUser[] {
-  try {
-    return JSON.parse(localStorage.getItem(USERS_KEY) || "[]");
-  } catch {
-    return [];
-  }
-}
-
-function saveStoredUsers(users: StoredUser[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
-function getSession(): User | null {
-  try {
-    const raw = localStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function saveSession(user: User | null) {
-  if (user) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(SESSION_KEY);
-  }
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+async function fetchProfile(userId: string): Promise<UserProfile | null> {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("id, name, email, role")
+    .eq("id", userId)
+    .single();
+
+  if (error || !data) return null;
+  return { id: data.id, name: data.name, email: data.email, role: data.role as UserRole };
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(() => getSession());
+  const [user, setUser] = useState<UserProfile | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    saveSession(user);
-  }, [user]);
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, newSession) => {
+      setSession(newSession);
+      if (newSession?.user) {
+        // Use setTimeout to avoid Supabase client deadlock
+        setTimeout(async () => {
+          const profile = await fetchProfile(newSession.user.id);
+          setUser(profile);
+          setLoading(false);
+        }, 0);
+      } else {
+        setUser(null);
+        setLoading(false);
+      }
+    });
 
-  const signup = useCallback((name: string, email: string, password: string, role: UserRole) => {
+    // THEN check for existing session
+    supabase.auth.getSession().then(async ({ data: { session: existingSession } }) => {
+      setSession(existingSession);
+      if (existingSession?.user) {
+        const profile = await fetchProfile(existingSession.user.id);
+        setUser(profile);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const signup = useCallback(async (name: string, email: string, password: string, role: UserRole) => {
     const trimmedEmail = email.toLowerCase().trim();
     if (!name.trim() || !trimmedEmail || !password) {
       return { success: false, error: "All fields are required" };
-    }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      return { success: false, error: "Please enter a valid email address" };
     }
     if (password.length < 6) {
       return { success: false, error: "Password must be at least 6 characters" };
     }
 
-    const users = getStoredUsers();
-    if (users.some(u => u.email === trimmedEmail)) {
-      return { success: false, error: "An account with this email already exists" };
-    }
+    const { data, error } = await supabase.auth.signUp({
+      email: trimmedEmail,
+      password,
+      options: {
+        data: { name: name.trim(), role },
+      },
+    });
 
-    const newUser: StoredUser = { name: name.trim(), email: trimmedEmail, password, role };
-    saveStoredUsers([...users, newUser]);
+    if (error) return { success: false, error: error.message };
+    if (!data.user) return { success: false, error: "Signup failed" };
 
-    const sessionUser: User = { name: newUser.name, email: newUser.email, role: newUser.role };
-    setUser(sessionUser);
     return { success: true };
   }, []);
 
-  const login = useCallback((email: string, password: string) => {
+  const login = useCallback(async (email: string, password: string) => {
     const trimmedEmail = email.toLowerCase().trim();
     if (!trimmedEmail || !password) {
       return { success: false, error: "Email and password are required" };
     }
 
-    const users = getStoredUsers();
-    const found = users.find(u => u.email === trimmedEmail && u.password === password);
-    if (!found) {
-      return { success: false, error: "Invalid email or password" };
-    }
+    const { error } = await supabase.auth.signInWithPassword({
+      email: trimmedEmail,
+      password,
+    });
 
-    const sessionUser: User = { name: found.name, email: found.email, role: found.role };
-    setUser(sessionUser);
+    if (error) return { success: false, error: error.message };
     return { success: true };
   }, []);
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
     setUser(null);
+    setSession(null);
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, login, signup, logout, isDoctor: user?.role === "doctor" }}>
+    <AuthContext.Provider value={{ user, session, loading, login, signup, logout, isDoctor: user?.role === "doctor" }}>
       {children}
     </AuthContext.Provider>
   );

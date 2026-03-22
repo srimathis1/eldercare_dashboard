@@ -4,7 +4,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import AppLayout from "./components/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import VoiceAssistant from "./pages/VoiceAssistant";
@@ -17,12 +18,40 @@ import SettingsPage from "./pages/SettingsPage";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
+import { Loader2 } from "lucide-react";
 
 const queryClient = new QueryClient();
 
 const AuthenticatedApp = () => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const [authPage, setAuthPage] = useState<"login" | "signup">("login");
+
+  // Handle pending patient creation for caregiver signup
+  useEffect(() => {
+    if (user && user.role === "caregiver") {
+      const pending = sessionStorage.getItem("pending_patient");
+      if (pending) {
+        sessionStorage.removeItem("pending_patient");
+        const patient = JSON.parse(pending);
+        supabase.from("patients").insert({
+          name: patient.name,
+          age: patient.age,
+          gender: patient.gender,
+          caregiver_id: user.id,
+        }).then(({ error }) => {
+          if (error) console.error("Failed to create patient:", error);
+        });
+      }
+    }
+  }, [user]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (!user) {
     return authPage === "login"

@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Heart, LogIn } from "lucide-react";
+import { Heart, LogIn, Loader2 } from "lucide-react";
 
 interface LoginProps {
   onSwitchToSignup: () => void;
@@ -13,14 +13,17 @@ const Login = ({ onSwitchToSignup }: LoginProps) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const result = login(email, password);
+    setSubmitting(true);
+    const result = await login(email, password);
     if (!result.success) {
       setError(result.error || "Login failed");
     }
+    setSubmitting(false);
   };
 
   return (
@@ -34,7 +37,7 @@ const Login = ({ onSwitchToSignup }: LoginProps) => {
           <p className="text-muted-foreground mt-1">AI-Powered Eldercare Monitoring</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="eldercare-card space-y-4">
+        <form onSubmit={handleSubmit} className="bg-card rounded-2xl shadow-md border border-border p-6 space-y-4">
           <h2 className="text-xl font-semibold text-center">Sign In</h2>
 
           {error && (
@@ -53,8 +56,8 @@ const Login = ({ onSwitchToSignup }: LoginProps) => {
             <Input type="password" className="mt-1" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} />
           </div>
 
-          <Button type="submit" className="w-full gap-2">
-            <LogIn className="w-4 h-4" />
+          <Button type="submit" className="w-full gap-2" disabled={submitting}>
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogIn className="w-4 h-4" />}
             Sign In
           </Button>
 
