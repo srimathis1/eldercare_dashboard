@@ -3,7 +3,7 @@ import { useAuth, UserRole } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Heart, UserPlus } from "lucide-react";
+import { Heart, UserPlus, Loader2 } from "lucide-react";
 
 interface SignupProps {
   onSwitchToLogin: () => void;
@@ -16,14 +16,42 @@ const Signup = ({ onSwitchToLogin }: SignupProps) => {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<UserRole>("doctor");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  // Caregiver patient fields
+  const [patientName, setPatientName] = useState("");
+  const [patientAge, setPatientAge] = useState("");
+  const [patientGender, setPatientGender] = useState("female");
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-    const result = signup(name, email, password, role);
+
+    if (role === "caregiver" && (!patientName.trim() || !patientAge)) {
+      setError("Patient name and age are required for caregivers");
+      return;
+    }
+
+    setSubmitting(true);
+    const result = await signup(name, email, password, role);
     if (!result.success) {
       setError(result.error || "Signup failed");
+      setSubmitting(false);
+      return;
     }
+
+    // If caregiver, create patient record after signup
+    if (role === "caregiver") {
+      // Patient creation will happen after auth state updates and profile is loaded
+      // Store patient data in sessionStorage temporarily
+      sessionStorage.setItem("pending_patient", JSON.stringify({
+        name: patientName.trim(),
+        age: parseInt(patientAge),
+        gender: patientGender,
+      }));
+    }
+
+    setSubmitting(false);
   };
 
   return (
@@ -37,7 +65,7 @@ const Signup = ({ onSwitchToLogin }: SignupProps) => {
           <p className="text-muted-foreground mt-1">Create your account</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="eldercare-card space-y-4">
+        <form onSubmit={handleSubmit} className="bg-card rounded-2xl shadow-md border border-border p-6 space-y-4">
           <h2 className="text-xl font-semibold text-center">Sign Up</h2>
 
           {error && (
@@ -74,8 +102,39 @@ const Signup = ({ onSwitchToLogin }: SignupProps) => {
             </Select>
           </div>
 
-          <Button type="submit" className="w-full gap-2">
-            <UserPlus className="w-4 h-4" />
+          {role === "caregiver" && (
+            <>
+              <div className="border-t border-border pt-4">
+                <p className="text-sm font-semibold text-foreground mb-3">Patient Details</p>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-muted-foreground">Patient Name</label>
+                <Input className="mt-1" placeholder="Patient's full name" value={patientName} onChange={e => setPatientName(e.target.value)} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Age</label>
+                  <Input type="number" className="mt-1" placeholder="Age" value={patientAge} onChange={e => setPatientAge(e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Gender</label>
+                  <Select value={patientGender} onValueChange={setPatientGender}>
+                    <SelectTrigger className="mt-1">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </>
+          )}
+
+          <Button type="submit" className="w-full gap-2" disabled={submitting}>
+            {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
             Create Account
           </Button>
 

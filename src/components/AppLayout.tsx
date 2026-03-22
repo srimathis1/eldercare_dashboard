@@ -2,10 +2,17 @@ import { Outlet } from "react-router-dom";
 import AppSidebar from "./AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Loader2 } from "lucide-react";
+import { useState } from "react";
 
 const AppLayout = () => {
   const { user, logout } = useAuth();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await logout();
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -16,8 +23,8 @@ const AppLayout = () => {
             Welcome, <span className="font-semibold text-foreground">{user?.name}</span>
             <span className="ml-1 capitalize">({user?.role})</span>
           </span>
-          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground" onClick={logout}>
-            <LogOut className="w-4 h-4" />
+          <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground" onClick={handleLogout} disabled={loggingOut}>
+            {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
             Logout
           </Button>
         </header>
