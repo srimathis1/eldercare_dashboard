@@ -40,7 +40,7 @@ const initialApts: DashApt[] = [
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { isDoctor } = useAuth();
+  const { isDoctor, selectedPatient } = useAuth();
   const [medList, setMedList] = useState(initialMeds);
   const [aptList, setAptList] = useState(initialApts);
 
@@ -60,6 +60,7 @@ const Dashboard = () => {
 
   const toggleTaken = (id: number) => {
     setMedList(prev => prev.map(m => m.id === id ? { ...m, taken: !m.taken } : m));
+    toast.success("Medication status updated");
   };
 
   // Med handlers
@@ -100,11 +101,16 @@ const Dashboard = () => {
         <div>
           <h1 className="text-2xl font-bold text-foreground">Dashboard</h1>
           <p className="text-muted-foreground text-sm">{today}</p>
+          {selectedPatient && (
+            <p className="text-sm text-primary font-medium mt-1">
+              Viewing: {selectedPatient.name} ({selectedPatient.age} yrs, {selectedPatient.gender})
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <p className="text-sm font-medium">Caregiver</p>
-            <p className="text-xs text-muted-foreground">Administrator</p>
+            <p className="text-sm font-medium">{isDoctor ? "Doctor" : "Caregiver"}</p>
+            <p className="text-xs text-muted-foreground">{isDoctor ? "Full Access" : "View & Mark"}</p>
           </div>
           <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
             <Users className="w-5 h-5 text-muted-foreground" />
@@ -116,7 +122,7 @@ const Dashboard = () => {
         {[
           { label: "Upcoming Appointments", value: String(aptList.length), sub: `Next: Today ${aptList[0]?.time || "N/A"}`, icon: Calendar, onClick: () => navigate("/appointments") },
           { label: "Active Medications", value: String(medList.filter(m => !m.taken).length), sub: `${medList.length} total tracked`, icon: Pill, onClick: () => navigate("/medications") },
-          { label: "Patients", value: "2", sub: "Active care plans", icon: Users, onClick: () => navigate("/patient-profile") },
+          { label: "Patients", value: isDoctor ? "View All" : "1", sub: isDoctor ? "Manage patients" : "Your assigned patient", icon: Users, onClick: () => navigate(isDoctor ? "/patients" : "/patient-profile") },
           { label: "Pending Alerts", value: "2", sub: "Medication reminders", icon: AlertTriangle, onClick: () => navigate("/notifications") },
         ].map(card => (
           <div key={card.label} className="stat-card cursor-pointer hover:shadow-md transition-shadow active:scale-[0.98]" onClick={card.onClick}>

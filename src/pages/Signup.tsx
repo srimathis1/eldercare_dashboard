@@ -18,39 +18,14 @@ const Signup = ({ onSwitchToLogin }: SignupProps) => {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
-  // Caregiver patient fields
-  const [patientName, setPatientName] = useState("");
-  const [patientAge, setPatientAge] = useState("");
-  const [patientGender, setPatientGender] = useState("female");
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
-
-    if (role === "caregiver" && (!patientName.trim() || !patientAge)) {
-      setError("Patient name and age are required for caregivers");
-      return;
-    }
-
     setSubmitting(true);
     const result = await signup(name, email, password, role);
     if (!result.success) {
       setError(result.error || "Signup failed");
-      setSubmitting(false);
-      return;
     }
-
-    // If caregiver, create patient record after signup
-    if (role === "caregiver") {
-      // Patient creation will happen after auth state updates and profile is loaded
-      // Store patient data in sessionStorage temporarily
-      sessionStorage.setItem("pending_patient", JSON.stringify({
-        name: patientName.trim(),
-        age: parseInt(patientAge),
-        gender: patientGender,
-      }));
-    }
-
     setSubmitting(false);
   };
 
@@ -103,34 +78,11 @@ const Signup = ({ onSwitchToLogin }: SignupProps) => {
           </div>
 
           {role === "caregiver" && (
-            <>
-              <div className="border-t border-border pt-4">
-                <p className="text-sm font-semibold text-foreground mb-3">Patient Details</p>
-              </div>
-              <div>
-                <label className="text-sm font-medium text-muted-foreground">Patient Name</label>
-                <Input className="mt-1" placeholder="Patient's full name" value={patientName} onChange={e => setPatientName(e.target.value)} />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Age</label>
-                  <Input type="number" className="mt-1" placeholder="Age" value={patientAge} onChange={e => setPatientAge(e.target.value)} />
-                </div>
-                <div>
-                  <label className="text-sm font-medium text-muted-foreground">Gender</label>
-                  <Select value={patientGender} onValueChange={setPatientGender}>
-                    <SelectTrigger className="mt-1">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </>
+            <div className="bg-muted/50 rounded-lg p-3">
+              <p className="text-xs text-muted-foreground">
+                As a caregiver, your account will automatically link to any patient your doctor has assigned to your email address.
+              </p>
+            </div>
           )}
 
           <Button type="submit" className="w-full gap-2" disabled={submitting}>
