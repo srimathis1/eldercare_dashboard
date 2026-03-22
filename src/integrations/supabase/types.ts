@@ -19,6 +19,7 @@ export type Database = {
           address: string | null
           age: number
           blood_type: string | null
+          caregiver_email: string | null
           caregiver_id: string | null
           created_at: string
           doctor_id: string | null
@@ -33,6 +34,7 @@ export type Database = {
           address?: string | null
           age: number
           blood_type?: string | null
+          caregiver_email?: string | null
           caregiver_id?: string | null
           created_at?: string
           doctor_id?: string | null
@@ -47,6 +49,7 @@ export type Database = {
           address?: string | null
           age?: number
           blood_type?: string | null
+          caregiver_email?: string | null
           caregiver_id?: string | null
           created_at?: string
           doctor_id?: string | null
