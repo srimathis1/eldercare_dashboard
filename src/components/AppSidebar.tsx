@@ -1,4 +1,5 @@
 import { NavLink, useLocation } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   LayoutDashboard,
   Phone,
@@ -8,21 +9,24 @@ import {
   User,
   Bell,
   Settings,
+  Users,
 } from "lucide-react";
-
-const navItems = [
-  { to: "/", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/voice-assistant", label: "Voice Assistant", icon: Phone },
-  { to: "/smart-health", label: "Smart Health", icon: Brain },
-  { to: "/appointments", label: "Appointments", icon: Calendar },
-  { to: "/medications", label: "Medications", icon: Pill },
-  { to: "/patient-profile", label: "Patient Profile", icon: User },
-  { to: "/notifications", label: "Notifications", icon: Bell },
-  { to: "/settings", label: "Settings", icon: Settings },
-];
 
 const AppSidebar = () => {
   const location = useLocation();
+  const { isDoctor } = useAuth();
+
+  const navItems = [
+    { to: "/", label: "Dashboard", icon: LayoutDashboard },
+    ...(isDoctor ? [{ to: "/patients", label: "Patients", icon: Users }] : []),
+    { to: "/voice-assistant", label: "Voice Assistant", icon: Phone },
+    { to: "/smart-health", label: "Smart Health", icon: Brain },
+    { to: "/appointments", label: "Appointments", icon: Calendar },
+    { to: "/medications", label: "Medications", icon: Pill },
+    { to: "/patient-profile", label: "Patient Profile", icon: User },
+    { to: "/notifications", label: "Notifications", icon: Bell },
+    { to: "/settings", label: "Settings", icon: Settings },
+  ];
 
   return (
     <aside className="w-60 min-h-screen bg-card border-r border-border flex flex-col py-6 px-4">

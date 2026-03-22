@@ -4,10 +4,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
 import AppLayout from "./components/AppLayout";
 import Dashboard from "./pages/Dashboard";
+import Patients from "./pages/Patients";
 import VoiceAssistant from "./pages/VoiceAssistant";
 import SmartHealth from "./pages/SmartHealth";
 import Appointments from "./pages/Appointments";
@@ -25,25 +25,6 @@ const queryClient = new QueryClient();
 const AuthenticatedApp = () => {
   const { user, loading } = useAuth();
   const [authPage, setAuthPage] = useState<"login" | "signup">("login");
-
-  // Handle pending patient creation for caregiver signup
-  useEffect(() => {
-    if (user && user.role === "caregiver") {
-      const pending = sessionStorage.getItem("pending_patient");
-      if (pending) {
-        sessionStorage.removeItem("pending_patient");
-        const patient = JSON.parse(pending);
-        supabase.from("patients").insert({
-          name: patient.name,
-          age: patient.age,
-          gender: patient.gender,
-          caregiver_id: user.id,
-        }).then(({ error }) => {
-          if (error) console.error("Failed to create patient:", error);
-        });
-      }
-    }
-  }, [user]);
 
   if (loading) {
     return (
@@ -64,6 +45,7 @@ const AuthenticatedApp = () => {
       <Routes>
         <Route element={<AppLayout />}>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/patients" element={<Patients />} />
           <Route path="/voice-assistant" element={<VoiceAssistant />} />
           <Route path="/smart-health" element={<SmartHealth />} />
           <Route path="/appointments" element={<Appointments />} />
