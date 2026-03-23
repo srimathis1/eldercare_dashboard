@@ -14,6 +14,124 @@ export type Database = {
   }
   public: {
     Tables: {
+      appointments: {
+        Row: {
+          created_at: string
+          date: string
+          doctor: string | null
+          id: string
+          location: string | null
+          notes: string | null
+          patient_id: string
+          patient_name: string
+          phone: string | null
+          status: string
+          time: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          doctor?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          patient_id: string
+          patient_name: string
+          phone?: string | null
+          status?: string
+          time?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          doctor?: string | null
+          id?: string
+          location?: string | null
+          notes?: string | null
+          patient_id?: string
+          patient_name?: string
+          phone?: string | null
+          status?: string
+          time?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "appointments_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      medications: {
+        Row: {
+          created_at: string
+          doctor: string | null
+          dosage: string
+          frequency: string
+          id: string
+          instructions: string | null
+          name: string
+          next_dose: string | null
+          patient_id: string
+          remaining: number
+          status: string
+          taken: boolean
+          times: string | null
+          total: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doctor?: string | null
+          dosage: string
+          frequency?: string
+          id?: string
+          instructions?: string | null
+          name: string
+          next_dose?: string | null
+          patient_id: string
+          remaining?: number
+          status?: string
+          taken?: boolean
+          times?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doctor?: string | null
+          dosage?: string
+          frequency?: string
+          id?: string
+          instructions?: string | null
+          name?: string
+          next_dose?: string | null
+          patient_id?: string
+          remaining?: number
+          status?: string
+          taken?: boolean
+          times?: string | null
+          total?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "medications_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       patients: {
         Row: {
           address: string | null

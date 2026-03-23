@@ -1,134 +1,148 @@
-import { Pill, Clock, AlertCircle, Plus, Pencil, Trash2 } from "lucide-react";
+import { Pill, Clock, AlertCircle, Plus, Pencil, Trash2, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
-import { useState, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import PrescriptionScanner from "@/components/PrescriptionScanner";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Medication {
-  id: number;
+  id: string;
+  patient_id: string;
   name: string;
   dosage: string;
   frequency: string;
-  times: string;
-  nextDose: string;
-  doctor: string;
-  instructions: string;
+  times: string | null;
+  next_dose: string | null;
+  doctor: string | null;
+  instructions: string | null;
   remaining: number;
   total: number;
-  status: "active" | "paused";
+  taken: boolean;
+  status: string;
 }
-
-const initialMedications: Medication[] = [
-  { id: 1, name: "Lisinopril", dosage: "10mg", frequency: "Twice daily", times: "08:00 AM, 08:00 PM", nextDose: "8:00 PM", doctor: "Dr. Sarah Williams", instructions: "Take with food", remaining: 25, total: 30, status: "active" },
-  { id: 2, name: "Metformin", dosage: "500mg", frequency: "Three times daily", times: "08:00 AM, 12:00 PM, 06:00 PM", nextDose: "6:00 PM", doctor: "Dr. Sarah Williams", instructions: "Take with meals", remaining: 30, total: 30, status: "active" },
-  { id: 3, name: "Aspirin", dosage: "81mg", frequency: "Once daily", times: "08:00 AM", nextDose: "8:00 AM", doctor: "Dr. Sarah Williams", instructions: "Take with water", remaining: 20, total: 30, status: "active" },
-];
 
 const emptyForm = { name: "", dosage: "", frequency: "", times: "", nextDose: "", doctor: "", instructions: "", remaining: "", total: "" };
 
 const Medications = () => {
-  const { isDoctor } = useAuth();
-  const [medications, setMedications] = useState(initialMedications);
+  const { isDoctor, selectedPatient } = useAuth();
+  const [medications, setMedications] = useState<Medication[]>([]);
+  const [loading, setLoading] = useState(true);
   const [formDialog, setFormDialog] = useState(false);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState(emptyForm);
   const [deleteConfirm, setDeleteConfirm] = useState<Medication | null>(null);
-  const lastDeletedRef = useRef<{ med: Medication; index: number } | null>(null);
+
+  const patientId = selectedPatient?.id;
+
+  const fetchMedications = useCallback(async () => {
+    if (!patientId) { setMedications([]); setLoading(false); return; }
+    const { data, error } = await supabase
+      .from("medications")
+      .select("*")
+      .eq("patient_id", patientId)
+      .order("created_at", { ascending: false });
+    if (!error && data) setMedications(data as Medication[]);
+    setLoading(false);
+  }, [patientId]);
+
+  useEffect(() => { fetchMedications(); }, [fetchMedications]);
+
+  // Realtime
+  useEffect(() => {
+    if (!patientId) return;
+    const channel = supabase
+      .channel("medications-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "medications", filter: `patient_id=eq.${patientId}` }, () => {
+        fetchMedications();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [patientId, fetchMedications]);
 
   const activeMeds = medications.filter(m => m.status === "active").length;
   const lowStock = medications.filter(m => m.remaining <= 5).length;
 
-  const handleScannedMeds = (parsed: { name: string; dosage: string; timing: string; instructions: string }[]) => {
-    const newMeds: Medication[] = parsed.map(p => ({
-      id: Date.now() + Math.random(),
+  const handleScannedMeds = async (parsed: { name: string; dosage: string; timing: string; instructions: string }[]) => {
+    if (!patientId) return;
+    const rows = parsed.map(p => ({
+      patient_id: patientId,
       name: p.name,
       dosage: p.dosage,
       frequency: p.timing,
-      times: p.timing === "Twice daily" ? "08:00 AM, 08:00 PM" : p.timing === "Three times daily" ? "08:00 AM, 12:00 PM, 06:00 PM" : "08:00 AM",
-      nextDose: "8:00 AM",
+      times: p.timing === "Twice daily" ? "08:00 AM, 08:00 PM" : "08:00 AM",
+      next_dose: "8:00 AM",
       doctor: "From Prescription",
       instructions: p.instructions,
-      remaining: 30,
-      total: 30,
-      status: "active",
     }));
-    setMedications(prev => [...newMeds, ...prev]);
+    const { error } = await supabase.from("medications").insert(rows);
+    if (error) toast.error("Failed to add scanned medications");
+    else { toast.success(`${parsed.length} medication(s) added from scan`); fetchMedications(); }
   };
 
-  const openCreate = () => {
-    setEditingId(null);
-    setFormData(emptyForm);
-    setFormDialog(true);
-  };
+  const openCreate = () => { setEditingId(null); setFormData(emptyForm); setFormDialog(true); };
 
   const openEdit = (med: Medication) => {
     setEditingId(med.id);
     setFormData({
       name: med.name, dosage: med.dosage, frequency: med.frequency,
-      times: med.times, nextDose: med.nextDose, doctor: med.doctor,
-      instructions: med.instructions, remaining: String(med.remaining), total: String(med.total),
+      times: med.times || "", nextDose: med.next_dose || "", doctor: med.doctor || "",
+      instructions: med.instructions || "", remaining: String(med.remaining), total: String(med.total),
     });
     setFormDialog(true);
   };
 
-  const handleSubmit = () => {
-    if (!formData.name || !formData.dosage) {
-      toast.error("Name and dosage are required");
-      return;
-    }
-    if (editingId !== null) {
-      setMedications(prev => prev.map(m => m.id === editingId ? {
-        ...m, name: formData.name, dosage: formData.dosage,
-        frequency: formData.frequency || m.frequency,
-        times: formData.times || m.times, nextDose: formData.nextDose || m.nextDose,
-        doctor: formData.doctor || m.doctor, instructions: formData.instructions || m.instructions,
-        remaining: Number(formData.remaining) || m.remaining,
-        total: Number(formData.total) || m.total,
-      } : m));
-      toast.success("Medication updated successfully");
+  const handleSubmit = async () => {
+    if (!formData.name || !formData.dosage) { toast.error("Name and dosage are required"); return; }
+    if (editingId) {
+      const { error } = await supabase.from("medications").update({
+        name: formData.name, dosage: formData.dosage,
+        frequency: formData.frequency || "Once daily",
+        times: formData.times || null, next_dose: formData.nextDose || null,
+        doctor: formData.doctor || null, instructions: formData.instructions || null,
+        remaining: Number(formData.remaining) || 30, total: Number(formData.total) || 30,
+      }).eq("id", editingId);
+      if (error) toast.error("Update failed"); else toast.success("Medication updated");
     } else {
-      const med: Medication = {
-        id: Date.now(), name: formData.name, dosage: formData.dosage,
-        frequency: formData.frequency || "Once daily", times: formData.times || "08:00 AM",
-        nextDose: formData.nextDose || "8:00 AM", doctor: formData.doctor || "TBD",
-        instructions: formData.instructions || "", remaining: Number(formData.remaining) || 30,
-        total: Number(formData.total) || 30, status: "active",
-      };
-      setMedications(prev => [med, ...prev]);
-      toast.success("Medication added successfully");
+      if (!patientId) { toast.error("No patient selected"); return; }
+      const { error } = await supabase.from("medications").insert({
+        patient_id: patientId, name: formData.name, dosage: formData.dosage,
+        frequency: formData.frequency || "Once daily",
+        times: formData.times || null, next_dose: formData.nextDose || null,
+        doctor: formData.doctor || null, instructions: formData.instructions || null,
+        remaining: Number(formData.remaining) || 30, total: Number(formData.total) || 30,
+      });
+      if (error) toast.error("Failed to add medication"); else toast.success("Medication added");
     }
-    setFormDialog(false);
-    setFormData(emptyForm);
-    setEditingId(null);
+    setFormDialog(false); setFormData(emptyForm); setEditingId(null);
+    fetchMedications();
   };
 
-  const handleDelete = (med: Medication) => {
-    const index = medications.findIndex(m => m.id === med.id);
-    lastDeletedRef.current = { med, index };
-    setMedications(prev => prev.filter(m => m.id !== med.id));
+  const handleDelete = async (med: Medication) => {
+    const { error } = await supabase.from("medications").delete().eq("id", med.id);
+    if (error) toast.error("Delete failed"); else toast.success("Medication deleted");
     setDeleteConfirm(null);
-    toast.success("Medication deleted", {
-      action: {
-        label: "Undo",
-        onClick: () => {
-          if (lastDeletedRef.current) {
-            const { med: restored, index: idx } = lastDeletedRef.current;
-            setMedications(prev => {
-              const copy = [...prev];
-              copy.splice(idx, 0, restored);
-              return copy;
-            });
-            toast.success("Medication restored");
-          }
-        },
-      },
-    });
+    fetchMedications();
   };
+
+  const handleToggleTaken = async (med: Medication) => {
+    const { error } = await supabase.from("medications").update({ taken: !med.taken }).eq("id", med.id);
+    if (error) toast.error("Update failed"); else toast.success(med.taken ? "Marked as not taken" : "Marked as taken");
+    fetchMedications();
+  };
+
+  if (!patientId) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <Pill className="w-12 h-12 mx-auto mb-3 opacity-40" />
+        <p>Select a patient to view medications.</p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -139,34 +153,15 @@ const Medications = () => {
         </div>
         {isDoctor && (
           <Button className="gap-2" onClick={openCreate}>
-            <Plus className="w-4 h-4" />
-            Add Medication
+            <Plus className="w-4 h-4" /> Add Medication
           </Button>
         )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="stat-card">
-          <div>
-            <p className="text-sm text-muted-foreground">Active Medications</p>
-            <p className="text-3xl font-bold mt-1">{activeMeds}</p>
-          </div>
-          <Pill className="w-10 h-10 text-primary opacity-60" />
-        </div>
-        <div className="stat-card">
-          <div>
-            <p className="text-sm text-muted-foreground">Total Tracked</p>
-            <p className="text-3xl font-bold mt-1">{medications.length}</p>
-          </div>
-          <Clock className="w-10 h-10 text-primary opacity-60" />
-        </div>
-        <div className="stat-card">
-          <div>
-            <p className="text-sm text-muted-foreground">Low Stock</p>
-            <p className="text-3xl font-bold mt-1">{lowStock}</p>
-          </div>
-          <AlertCircle className="w-10 h-10 text-warning opacity-60" />
-        </div>
+        <div className="stat-card"><div><p className="text-sm text-muted-foreground">Active Medications</p><p className="text-3xl font-bold mt-1">{activeMeds}</p></div><Pill className="w-10 h-10 text-primary opacity-60" /></div>
+        <div className="stat-card"><div><p className="text-sm text-muted-foreground">Total Tracked</p><p className="text-3xl font-bold mt-1">{medications.length}</p></div><Clock className="w-10 h-10 text-primary opacity-60" /></div>
+        <div className="stat-card"><div><p className="text-sm text-muted-foreground">Low Stock</p><p className="text-3xl font-bold mt-1">{lowStock}</p></div><AlertCircle className="w-10 h-10 text-warning opacity-60" /></div>
       </div>
 
       {isDoctor && <PrescriptionScanner onMedicationsDetected={handleScannedMeds} />}
@@ -176,51 +171,38 @@ const Medications = () => {
           <div key={med.id} className="eldercare-card">
             <div className="flex items-start justify-between mb-1">
               <div className="flex items-center gap-2">
+                <button
+                  onClick={() => handleToggleTaken(med)}
+                  className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${med.taken ? "bg-success border-success" : "border-muted-foreground hover:border-primary"}`}
+                >
+                  {med.taken && <Check className="w-3 h-3 text-success-foreground" />}
+                </button>
                 <Pill className="w-4 h-4 text-primary" />
-                <h3 className="font-semibold text-lg">{med.name}</h3>
+                <h3 className={`font-semibold text-lg ${med.taken ? "line-through text-muted-foreground" : ""}`}>{med.name}</h3>
               </div>
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium bg-primary text-primary-foreground">
-                  {med.status}
-                </span>
+                <span className="inline-flex items-center rounded-md px-2.5 py-0.5 text-xs font-medium bg-primary text-primary-foreground">{med.status}</span>
                 {isDoctor && (
                   <>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(med)}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(med)}>
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(med)}><Pencil className="w-3.5 h-3.5" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => setDeleteConfirm(med)}><Trash2 className="w-3.5 h-3.5" /></Button>
                   </>
                 )}
               </div>
             </div>
-            <p className="text-sm text-muted-foreground mb-3 ml-6">{med.dosage}</p>
-
+            <p className="text-sm text-muted-foreground mb-3 ml-11">{med.dosage}</p>
             <div className="space-y-1.5 text-sm mb-3">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Frequency:</span>
-                <span className="font-medium">{med.frequency}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Times:</span>
-                <span className="font-medium">{med.times}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Next dose:</span>
-                <span className="text-primary font-medium">{med.nextDose}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Prescribed by:</span>
-                <span className="font-medium">{med.doctor}</span>
-              </div>
+              <div className="flex justify-between"><span className="text-muted-foreground">Frequency:</span><span className="font-medium">{med.frequency}</span></div>
+              {med.times && <div className="flex justify-between"><span className="text-muted-foreground">Times:</span><span className="font-medium">{med.times}</span></div>}
+              {med.next_dose && <div className="flex justify-between"><span className="text-muted-foreground">Next dose:</span><span className="text-primary font-medium">{med.next_dose}</span></div>}
+              {med.doctor && <div className="flex justify-between"><span className="text-muted-foreground">Prescribed by:</span><span className="font-medium">{med.doctor}</span></div>}
             </div>
-
-            <div className="bg-accent/50 rounded-lg p-3 mb-3">
-              <p className="text-xs text-primary font-medium">Instructions</p>
-              <p className="text-sm">{med.instructions}</p>
-            </div>
-
+            {med.instructions && (
+              <div className="bg-accent/50 rounded-lg p-3 mb-3">
+                <p className="text-xs text-primary font-medium">Instructions</p>
+                <p className="text-sm">{med.instructions}</p>
+              </div>
+            )}
             <div className="flex justify-between text-sm mb-1">
               <span className="text-muted-foreground">Remaining:</span>
               <span className="text-primary font-medium">{med.remaining} of {med.total} pills</span>
@@ -230,11 +212,10 @@ const Medications = () => {
         ))}
       </div>
 
-      {medications.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">No medications. Click "Add Medication" to start.</div>
+      {!loading && medications.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground">No medications. {isDoctor ? 'Click "Add Medication" to start.' : ""}</div>
       )}
 
-      {/* Create / Edit Dialog */}
       <Dialog open={formDialog} onOpenChange={setFormDialog}>
         <DialogContent>
           <DialogHeader>
@@ -253,27 +234,20 @@ const Medications = () => {
               <Input type="number" placeholder="Remaining pills" value={formData.remaining} onChange={e => setFormData(p => ({ ...p, remaining: e.target.value }))} />
               <Input type="number" placeholder="Total pills" value={formData.total} onChange={e => setFormData(p => ({ ...p, total: e.target.value }))} />
             </div>
-            <Button className="w-full" onClick={handleSubmit}>
-              {editingId ? "Update Medication" : "Add Medication"}
-            </Button>
+            <Button className="w-full" onClick={handleSubmit}>{editingId ? "Update Medication" : "Add Medication"}</Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Medication</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete {deleteConfirm?.name} ({deleteConfirm?.dosage})? This action can be undone.
-            </AlertDialogDescription>
+            <AlertDialogDescription>Are you sure you want to delete {deleteConfirm?.name} ({deleteConfirm?.dosage})?</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteConfirm && handleDelete(deleteConfirm)}>
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={() => deleteConfirm && handleDelete(deleteConfirm)}>Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
